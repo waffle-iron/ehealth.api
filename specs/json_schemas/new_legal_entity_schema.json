@@ -228,7 +228,12 @@
               "what_licensed": {
                 "type": "string"
               }
-            }
+            },
+            "required":
+            [
+              "license_number",
+              "issued_date"
+            ]
           }
         },
         "accreditation": {
