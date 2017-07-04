@@ -39,13 +39,6 @@ documents | jsonb | not null
 inserted_at | timestamp | not null
 updated_at | timestamp | not null
 
-[declarations_signed]
-id | uuid | not null
-document_type | enum('declaration','msp_registration') | not null
-document | jsonb | not null
-inserted_at | timestamp | not null
-updated_at | timestamp | not null
-
 [declaration_log_changes]
 id | uuid | not null
 user_id | uuid | not null
@@ -218,9 +211,6 @@ declaration_log_changes
 (il_db)
 declaration_requests
 employee_requests
-
-(mediastorage)
-declarations_signed
 
 capitation_contracts 1--1 legal_entities
 capitation_contracts *--1 products
