@@ -1144,7 +1144,16 @@ Notes:
 
 ![oAuth Sequence](https://www.websequencediagrams.com/cgi-bin/cdraw?lz=dGl0bGUgb0F1dGggRmxvdwoKQ2xpZW50IC0-IExvZ2luIFVJOiByZWRpcmVjdCB0bwANCSB3aXRoIGBjACoFX2lkYCwgYAAgCF91cmlgIGFuZCBgcmVzcG9uc2VfdHlwZT1jb2RlYCBxdWVyeSBwYXJhbXMKAEcJAGUNY29tcGxldGUgU2Vzc2lvbiBhdXRoIGZsb3cAJA1Vc2VyOiByZW5kZXIgcGFnZQCBEAZBcHByb3ZhbCAod2hpY2ggbGlzdHMgcmVxdWVzdGVkIHNjb3BlcykKVXNlcgCBXA5hADUFZQAbBwCBEA0Agh8FU2VydmVyOiBzZW5kIGBQT1NUIC9hcHBzYABWCAoAHAsAgjcOSFRUUCAyMDEsAIEVCmFuZCBMb2NhdGlvbiBoZWFkZXIAggMNAIMGBgCCdQt1c2VyIHRvIHVybCByZXR1cm5lZCBpbiBgAD4IYAA_CACDPQoAgSYSAIExBnRva2Vucz9ncmFudACDGAZhdXRob3JpegCBCwVfY29kZSAtIGV4Y2hhbmdlIGAAgzcGZnJvbQCDNgxldGVycyB0byBhbiBgYWNjZXNzXwBWBWAAgXsQAIIzDnRvcmUgcmVmcmVzaCAAgQcFAIIrEACBdggAJQZgACUHAFYHIChpbiBiYWNrLWVuZCEpAIRoBQCDDwYAdw0gdG8Agj8HIFVJCm5vdGUgb3ZlcgBMEAAmDihpbiBsb2NhbACBIQVhZ2UsIGNvb2tpZSwgZXRjLgBnBm1ha2VzIGFsbCBmdXR1AIFHBQCEWgVzAIYSB0F1aHQAgkQJOiBCZWFyZXIgPACCFgw-AIMlCQo&s=modern-blue)
 
-### Show Login UI [GET /accept{?client_id,redirect_uri,scope}]
+### Show Login UI [GET /sign-in{?client_id,redirect_uri,scope,email}]
+
+**Attention!**
+Use following HOSTs for oAuth 2.0 Authentication
+
+Env     | Host
+--------|-----
+DEMO    | http://auth.demo.ehealth.world
+PREPROD | https://auth.ehealth.world
+PROD    | https://auth.ehealth-ukraine.org
 
 You MUST redirect your users to this URL to obtain oAuth Code Grant (which is later exchanged to Access Token).
 
@@ -1156,6 +1165,7 @@ For security purposes, we will set `X-Frame-Options: deny` header that will disa
     + client_id: `mis-001` (string, required) - Medical Information System ID issued upon integration request. Used to identify application developer.
     + redirect_uri: http://example.com/ (string, required) - URL where user will be redirected after authentification. This url will receive `code` and `state` parameters in query string.
     + scope: `capitation_contracts:view capitation_contracts:create patients:view patients:create` (string, required) - List of scopes that is required in application business logic, separated by space. Different login forms will be shown based on scopes that you requested.
+    + email: email@example.com
 
 + Response 200 (text/html; charset=UTF-8)
 
@@ -1369,12 +1379,6 @@ This method is used to create Declaration Request (as part of Declaration creati
                 + id: `b075f148-7f93-4fc2-b2ec-2d81b19a9b7b` (string, required)
             + division (`Division_Details`)
             + content: `Declaration content` (string, required) - HTML document that MUST be shown to a  - Should be defined on the client side.end-user and signed by hes key.
-            + `authentication_method` (`Authentication_Method`) - 
-                
-                Currently we support two authentifciation methods:
-                
-                * **OTP** - Preffered. One-time-password (usually sent via SMS). Masked phone number will be returned. By using this verification method you MUST approve Declaration Request by a OTP token that is sent to a patient mobile phone.
-                * **OFFLINE** - For patients that is not able to pass OTP verification method. By using this verification method you MUST upload required documents to links returned in response and approve Declaration Request after upload is completed.
             + urgent (object, required)
                 + documents (array[`media_content`], required)
 
@@ -1796,7 +1800,7 @@ Response structure differs depending on employee type:
             + division (Division_Short)
             + `legal_entity` (`Legal_Entity_Short`)
 
-### Deactivate Employee - TBD [PATCH /api/employees/{id}/action/deactivate]
+### Deactivate Employee - TBD [PATCH /api/employees/{id}/actions/deactivate]
 
 Use this method to deactivate employee.
 1. Revoke role from user
@@ -1978,7 +1982,10 @@ It returns:
 
 ## Legal Entities [/api/legal_entities]
 
-### Get Legal Entities [GET /api/legal_entities{?edrpou,legal_entity_id,settlement_id,type,owner_property,status,starting_after,ending_before,limit}]
+### Get Legal Entities [GET /api/legal_entities{?edrpou,legal_entity_id,settlement_id,type,owner_property,status,mis_verified,nhs_verified,starting_after,ending_before,limit}]
+
+Use this method to get list of legal entities filtering by parameters.
+List consists of legal entities with parameter `is_active = true`.
 
 + Parameters
     + `edrpou`: `341086` (string, optional)
@@ -1990,10 +1997,13 @@ It returns:
     + owner_property: state (enum, optional)
         - state
         - private
-    + status: VERIFIED (enum, required)
+    + status: ACTIVE (enum, optional)
+        - ACTIVE
+        - CLOSED
+    + mis_verified: VERIFIED (enum, optional)
         - VERIFIED
-        - DECLINED
-        - VERIFICATION_EXP
+        - NOT_VERIFIED 
+    + `nhs_verified`: false (boolean, optional)
     + limit: 20 (number, optional) - A limit on the number of objects to be returned, between 1 and 100. Default: 50.
         + Default: 50
     + starting_after: 56c31536a60ad644060041af (string, optional) - A cursor to fetch next page. Taken from collection response.
@@ -2027,10 +2037,13 @@ It returns:
         + data (object)
             + id: `b075f148-7f93-4fc2-b2ec-2d81b19a9b7b` (string, required)
             + include `Legal_Entity_Request_Public_Short`
-            + status: VERIFIED (enum, required)
+            + status: ACTIVE (enum, required)
+                - ACTIVE
+                - CLOSED
+            + `mis_verified`: NOT_VERIFIED (enum, required)
+                - NOT_VERIFIED
                 - VERIFIED
-                - DECLINED
-                - VERIFICATION_EXP
+            + `nhs_verified`: false (boolean, required)
             + security (object)
                 + `secret_key`: `secret_key` (string, required)
                 + `client_id`: `client_id` (string, required)
@@ -2039,6 +2052,11 @@ It returns:
 ### Create/Update Legal Entity [PUT]
 
 Use this method to register a new Legal Entity.
+
+New Legal Entity is created with 
+status = ACTIVE
+mis_verified = NOT_VERIFIED (if legal entity IS NOT in ukr_med_registry) and VERIFIED (if legal entity IS in ukr_med_registry)
+nhs_verified = false
 
 Method receives signed message (pkcs7) including signed content, digital signature and signer public key. 
 All signature fields will be validated (including signer certificate authority).
@@ -2147,10 +2165,13 @@ Signed content MUST consists of JSON object with Legal Entity data:
         + data (object)
             + id: `b075f148-7f93-4fc2-b2ec-2d81b19a9b7b` (string, required)
             + include Legal_Entity_Request_Public
-            + status: VERIFIED (enum, required)
+            + status: ACTIVE (enum, required)
+                - ACTIVE
+                - CLOSED
+            + `mis_verified`: NOT_VERIFIED (enum, required)
+                - NOT_VERIFIED
                 - VERIFIED
-                - DECLINED
-                - VERIFICATION_EXP
+            + `nhs_verified`: false (boolean, required)
         + urgent (object, optional)
             + security (object)
                 + `secret_key`: `secret_key` (string, required)
@@ -2163,10 +2184,13 @@ Signed content MUST consists of JSON object with Legal Entity data:
         + data (object)
             + id: `b075f148-7f93-4fc2-b2ec-2d81b19a9b7b` (string, required)
             + include Legal_Entity_Request_Public
-            + status: VERIFIED (enum, required)
+            + status: ACTIVE (enum, required)
+                - ACTIVE
+                - CLOSED
+            + `mis_verified`: NOT_VERIFIED (enum, required)
+                - NOT_VERIFIED
                 - VERIFIED
-                - DECLINED
-                - VERIFICATION_EXP
+            + `nhs_verified`: false (boolean, required)
         + urgent (object, optional)
             + security (object)
                 + `secret_key`: `secret_key` (string, required)
@@ -2174,7 +2198,11 @@ Signed content MUST consists of JSON object with Legal Entity data:
                 + `redirect_uri`: `redirect_uri` (string, required, fixed) - Redirect uri
             + employee_request_id: `d098aee7-5ab3-4a24-a6ba-811f9cf94c6d` - Employee request identifier
 
-### Update Legal Entity status [PATCH /api/legal_entities/{id}]
+### Verify Legal Entity by MIS [PATCH /api/legal_entities/{id}/actions/mis_verify]
+
+Use this method to verify legal entity by MIS.
+Available transition:
+`mis_verified` NOt_VERIFIED --> VERIFIED
 
 + Parameters
     + id: `b075f148-7f93-4fc2-b2ec-2d81b19a9b7b` (string, required)
@@ -2185,11 +2213,28 @@ Signed content MUST consists of JSON object with Legal Entity data:
 
             Authorization: Bearer mF_9.B5f-4.1JqM
     
-    + Attributes (object)
-        + status: VERIFIED (enum, required)
-            - VERIFIED
-            - DECLINED
-            - VERIFICATION_EXP
+
++ Response 200 (application/json)
+    + Attributes (Response__Process_OK)
+        + data (object)
+            + include `Legal_Entity_Short`
+            
+
+### Verify Legal Entity by NHS [PATCH /api/legal_entities/{id}/actions/nhs_verify]
+
+Use this method to verify legal entity by NHS.
+Available transition:
+`nhs_verified` false --> true
+
++ Parameters
+    + id: `b075f148-7f93-4fc2-b2ec-2d81b19a9b7b` (string, required)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer mF_9.B5f-4.1JqM
+    
 
 + Response 200 (application/json)
     + Attributes (Response__Process_OK)
@@ -2198,7 +2243,7 @@ Signed content MUST consists of JSON object with Legal Entity data:
             
 
 
-### Deactivate Legal Entity [PATCH /api/legal_entities/{id}/action/deactivate]
+### Deactivate Legal Entity [PATCH /api/legal_entities/{id}/actions/deactivate]
 
 Use this method to deactivate msp.
 1. Deactivate emploees by legal entity
@@ -2440,7 +2485,7 @@ API for searching Ukrainian Addresses
 + first_name: Петро (string, required)
 + last_name: Іванов (string, required)
 + second_name: Миколайович (string, optional)
-+ birth_date: `1991-08-19T00:00:00.000Z` (string, required)
++ birth_date: `1991-08-19` (string, required)
 + birth_country: `Україна` (string, required)
 + birth_settlement: `Вінниця` (string, required)
 + gender: MALE, FEMALE (enum[string], required)
@@ -2853,10 +2898,13 @@ API for searching Ukrainian Addresses
 + public_name: Клініка Борис (string, required)
 + type: MSP (string, required)
 + edrpou: 5432345432 (string, required)
-+ status: VERIFIED (enum, required)
++ status: ACTIVE (enum, required)
+    - ACTIVE
+    - CLOSED
++ mis_verified: VERIFIED (enum, required)
     - VERIFIED
-    - DECLINED
-    - VERIFICATION_EXP
+    - NOT_VERIFIED
++ nhs_verified: false (boolean)
 + `owner_property_type`: STATE (string, required) - `Dictionary OWNER_PROPERTY_TYPE`
 + `legal_form`: 140 (string, required) - `Dictionary LEGAL_FORM`
 

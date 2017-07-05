@@ -32,8 +32,6 @@ defmodule Ehealth.Web.Router do
     pipe_through :api
 
     # Legal Entities
-    get "/legal_entities/:id", LegalEntityController, :show
-    get "/legal_entities", LegalEntityController, :index
     put "/legal_entities", LegalEntityController, :create_or_update
 
     get "/dictionaries", DictionaryController, :index
@@ -46,10 +44,17 @@ defmodule Ehealth.Web.Router do
   scope "/api", EHealth.Web do
     pipe_through [:api, :api_client_id]
 
+    # Legal Entities
+    get "/legal_entities", LegalEntityController, :index
+    get "/legal_entities/:id", LegalEntityController, :show
+    patch "/legal_entities/:id/actions/nhs_verify", LegalEntityController, :nhs_verify
+
+    # Employees
     get "/employees", EmployeesController, :index
     get "/employees/:id", EmployeesController, :show
     patch "/employees/:id/actions/deactivate", EmployeesController, :deactivate
 
+    # Employee requests
     get "/employee_requests", EmployeeRequestController, :index
     post "/employee_requests", EmployeeRequestController, :create
     post "/employee_requests/:id/approve", EmployeeRequestController, :approve
