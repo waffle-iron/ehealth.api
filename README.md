@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/EDENLABLLC/ehealth.api.png?label=ready&title=Ready)](https://waffle.io/EDENLABLLC/ehealth.api?utm_source=badge)
 # ehealth
 
 [![Build Status](https://travis-ci.org/Nebo15/ehealth.api.svg?branch=master)](https://travis-ci.org/Nebo15/ehealth.api) [![Coverage Status](https://coveralls.io/repos/github/Nebo15/ehealth.api/badge.svg?branch=master)](https://coveralls.io/github/Nebo15/ehealth.api?branch=master)
